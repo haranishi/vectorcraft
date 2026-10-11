@@ -5,8 +5,8 @@ on:
 permissions:
   contents: read
 env:
-  REVISION: 2ac3ba2b866ad9d34b2252dd8024f73e34f4b2b8
-  RPM_EXPECT: before
+  REVISION: 11f9fa1d37141b4a2c5ca22476c5828ba0adc314
+  RPM_EXPECT: after
 jobs:
   rpm-providers:
     runs-on: ubuntu-22.04
