@@ -1,0 +1,35 @@
+name: RPM metadata CI
+on:
+  push:
+    branches: [ci/rpm-metadata-probe]
+permissions:
+  contents: read
+env:
+  REVISION: 2ac3ba2b866ad9d34b2252dd8024f73e34f4b2b8
+  RPM_EXPECT: before
+jobs:
+  rpm-providers:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: harness
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.REVISION }}
+          path: source
+      - name: Verify source revision
+        run: test "$(git -C source rev-parse HEAD)" = "$REVISION"
+      - name: Install metadata tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm python3-yaml
+          curl -fsSL -o "$RUNNER_TEMP/nfpm.tar.gz" https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz
+          printf '%s  %s\n' 0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783 "$RUNNER_TEMP/nfpm.tar.gz" | sha256sum --check
+          tar -xf "$RUNNER_TEMP/nfpm.tar.gz" -C "$RUNNER_TEMP" nfpm
+          printf '%s\n' "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Check both architectures and isolated providers
+        env:
+          SOURCE_ROOT: ${{ github.workspace }}/source
+        run: python3 harness/.github/scripts/rpm_metadata_probe.py
